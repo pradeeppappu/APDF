@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/APDF.iml" filepath="$PROJECT_DIR$/APDF.iml" />
+      <module fileurl="file://$PROJECT_DIR$/APDFModule/APDFModule.iml" filepath="$PROJECT_DIR$/APDFModule/APDFModule.iml" />
+    </modules>
+  </component>
+</project>
+
