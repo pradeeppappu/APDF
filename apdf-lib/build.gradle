@@ -1,0 +1,85 @@
+apply plugin: 'android-library'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion '19.1.0'
+    defaultConfig {
+        applicationId 'au.pappu.apdf'
+        minSdkVersion 8
+        targetSdkVersion 19
+        versionCode 1
+        versionName '1.0'
+    }
+    buildTypes {
+        release {
+            runProguard true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            zipAlign true
+        }
+    }
+    productFlavors {
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:19.+'
+    compile 'com.github.castorflex.verticalviewpager:library:19.0.1'
+}
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+version = "1.0.0"
+group = "au.pappu"
+
+configurations {
+    archives {
+        extendsFrom configurations.default
+    }
+}
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: sonatypeRepo) {
+            authentication(userName: sonatypeUsername, password: sonatypePassword)
+        }
+
+        pom.project {
+            name 'Android PDF Viewer (APDF)'
+            packaging 'aar'
+            description 'PDF Viewer for Android applications'
+            url 'https://github.com/pradeeppappu/APDF'
+
+            scm {
+                url 'scm:git@github.com:pradeeppappu/APDF.git'
+                connection 'scm:git@github.com:pradeeppappu/APDF.git'
+                developerConnection 'scm:git@github.com:pradeeppappu/APDF.git'
+            }
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'pappu'
+                    name 'Pradeep Pappu'
+                    email 'pappu.pradeep34@gmail.com'
+                }
+            }
+        }
+    }
+}

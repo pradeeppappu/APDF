@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/APDF.iml" filepath="$PROJECT_DIR$/APDF.iml" />
-      <module fileurl="file://$PROJECT_DIR$/APDFModule/APDFModule.iml" filepath="$PROJECT_DIR$/APDFModule/APDFModule.iml" />
+      <module fileurl="file://$PROJECT_DIR$/apdf-lib/apdf-lib.iml" filepath="$PROJECT_DIR$/apdf-lib/apdf-lib.iml" />
     </modules>
   </component>
 </project>
