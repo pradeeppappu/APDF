@@ -2,12 +2,14 @@ package com.github.pradeeppappu.apdf;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -111,6 +113,12 @@ public class PDFFragment extends Fragment {
         mWebView.saveState(outState);
         outState.putStringArray(STATE_PAGES, mPages);
         super.onSaveInstanceState(outState);
+    }
+
+    public Bitmap getPageAt(int pageNum) {
+        if(pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
+            return Utils.getBitmap(mPages[pageNum]);
+        return null;
     }
 
     private void notifyDataSetChanged() {
