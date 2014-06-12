@@ -23,9 +23,11 @@ import android.widget.FrameLayout;
  */
 public class PDFFragment extends Fragment {
     public static final String ARG_URL = "argUrl";
+    public static final String ARG_SCALE = "argScale";
     public static final String STATE_PAGES = "statePages";
     private static final String TAG = PDFFragment.class.getName();
     private String mUrl;
+    private float mScale;
     private WebView mWebView;
     private PDFPager mPager;
     private PDFJavascriptInterface mJSInterface;
@@ -51,10 +53,11 @@ public class PDFFragment extends Fragment {
 
     private String[] mPages = new String[1]; // Images of all the pages.
 
-    public static PDFFragment newInstance(String url) {
+    public static PDFFragment newInstance(String url, float scale) {
         PDFFragment fragment = new PDFFragment();
         Bundle arguments = new Bundle();
         arguments.putString(ARG_URL, url);
+        arguments.putFloat(ARG_SCALE, scale);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -94,7 +97,8 @@ public class PDFFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         if(savedInstanceState == null) {
             mUrl = getArguments().getString(ARG_URL);
-            mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl);
+            mScale = getArguments().getFloat(ARG_SCALE);
+            mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale);
         } else {
             mWebView.restoreState(savedInstanceState);
             mPages = savedInstanceState.getStringArray(STATE_PAGES);

@@ -63,11 +63,9 @@ public class PDFPage extends Fragment {
     }
 
     private void setBitmap(String dataUrl) {
-        String encodedData = dataUrl.substring(dataUrl.indexOf(",") + 1);
-        byte[] decodedString = Base64.decode(encodedData, Base64.DEFAULT);
-        if (mBitmap != null)
+       if (mBitmap != null)
             mBitmap.recycle();
-        mBitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        mBitmap = Utils.getBitmap(dataUrl);
     }
 
     @Override

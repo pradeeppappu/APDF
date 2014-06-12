@@ -17,13 +17,14 @@
             }
             var params = parseQueryString(document.location.search.substring(1));
             var url = params.file;
+            var scale = params.scale;
             var pageNum = 1;
             var pageCount = 0;
             var pdfDocument;
             var pages = [];
             function getPage(index) {
                 pdfDocument.getPage(index).then(function(pdfPage) {
-                    var viewport = pdfPage.getViewport(2);
+                    var viewport = pdfPage.getViewport(scale);
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     canvas.height = viewport.height;
@@ -45,7 +46,7 @@
 
             function getPages() {
                 pdfDocument.getPage(pageNum).then(function(pdfPage) {
-                    var viewport = pdfPage.getViewport(2);
+                    var viewport = pdfPage.getViewport(scale);
                     var canvas = document.createElement('canvas');
                     var context = canvas.getContext('2d');
                     canvas.height = viewport.height;
@@ -72,7 +73,7 @@
                 pageCount = pdfDocument.numPages;
                 PDFAND.setNumOfPages(pageCount);
                 getPage(1);
-             });
+            });
         </script>
     </head>
 </html>
