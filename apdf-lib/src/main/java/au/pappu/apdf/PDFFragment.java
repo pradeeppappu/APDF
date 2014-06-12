@@ -18,8 +18,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 
-import fr.castorflex.android.verticalviewpager.VerticalViewPager;
-
 /**
  * Created by pappu on 11/06/2014.
  */
