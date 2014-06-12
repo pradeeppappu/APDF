@@ -18,7 +18,7 @@ public class MainActivity extends ActionBarActivity {
             Uri uri = getIntent().getData();
             String url = Uri.decode(uri.getEncodedPath());
             Log.i(TAG, "Opening File : " + url);
-            PDFFragment fragment = PDFFragment.newInstance(url);
+            PDFFragment fragment = PDFFragment.newInstance(url, 2);
             getSupportFragmentManager().beginTransaction().add(R.id.pdfWrapper, fragment, "PDF").commit();
         }
     }
