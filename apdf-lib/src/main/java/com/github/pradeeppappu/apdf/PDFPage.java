@@ -1,4 +1,4 @@
-package au.pappu.apdf;
+package com.github.pradeeppappu.apdf;
 
 import android.content.Context;
 import android.graphics.Bitmap;

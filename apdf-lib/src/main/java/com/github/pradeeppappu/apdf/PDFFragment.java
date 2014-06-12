@@ -1,4 +1,4 @@
-package au.pappu.apdf;
+package com.github.pradeeppappu.apdf;
 
 import android.annotation.TargetApi;
 import android.content.Context;
