@@ -15,9 +15,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 
 /**
@@ -76,6 +79,20 @@ public class PDFFragment extends Fragment {
 
         Context context = container.getContext();
         mWebView = new WebView(context);
+        mWebView.setWebChromeClient(new WebChromeClient(){
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d(TAG, consoleMessage.message());
+                return true;
+            }
+        });
+        mWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                Log.d(TAG, "WebView loading url : " + url);
+                super.onPageStarted(view, url, favicon);
+            }
+        });
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
             setupWebViewLayer();
 
