@@ -13,6 +13,8 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -64,7 +66,14 @@ public class PDFFragment extends Fragment {
         return fragment;
     }
 
-    @TargetApi(16)
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
+            setHasOptionsMenu(true);
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (container == null) {
@@ -74,13 +83,13 @@ public class PDFFragment extends Fragment {
 
         Context context = container.getContext();
         mWebView = new WebView(context);
-        if(Build.VERSION.SDK_INT > 10)
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
             mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         WebSettings settings = mWebView.getSettings();
         settings.setAllowFileAccess(true);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
-        if (Build.VERSION.SDK_INT > 15)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
             settings.setAllowFileAccessFromFileURLs(true);
         mJSInterface = new PDFJavascriptInterface();
         mWebView.addJavascriptInterface(mJSInterface, "PDFAND");
@@ -95,8 +104,17 @@ public class PDFFragment extends Fragment {
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        menu.clear();
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            setHasOptionsMenu(true);
+        }
         if(savedInstanceState == null) {
             mUrl = getArguments().getString(ARG_URL);
             mScale = getArguments().getFloat(ARG_SCALE);
