@@ -30,6 +30,8 @@ public class PDFFragment extends Fragment {
     private static final String TAG = PDFFragment.class.getName();
     private String mUrl;
     private float mScale;
+    private String[] mPages = new String[1]; // Images of all the pages.
+
     private WebView mWebView;
     private PDFPager mPager;
     private PDFJavascriptInterface mJSInterface;
@@ -52,8 +54,6 @@ public class PDFFragment extends Fragment {
 
         }
     };
-
-    private String[] mPages = new String[1]; // Images of all the pages.
 
     public static PDFFragment newInstance(String url, float scale) {
         PDFFragment fragment = new PDFFragment();
@@ -119,6 +119,16 @@ public class PDFFragment extends Fragment {
         if(pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
             return Utils.getBitmap(mPages[pageNum]);
         return null;
+    }
+
+    public int getPageCount() {
+        if(mPages == null)
+            return 0;
+        return mPages.length;
+    }
+
+    public String[] getPages() {
+        return mPages;
     }
 
     private void notifyDataSetChanged() {
