@@ -27,7 +27,7 @@ public class PDFFragment extends Fragment {
     public static final String ARG_URL = "argUrl";
     public static final String ARG_SCALE = "argScale";
     public static final String STATE_PAGES = "statePages";
-    private static final String TAG = PDFFragment.class.getName();
+    public static final String TAG = "PDFFragment";
     private String mUrl;
     private float mScale;
     private String[] mPages = new String[1]; // Images of all the pages.
