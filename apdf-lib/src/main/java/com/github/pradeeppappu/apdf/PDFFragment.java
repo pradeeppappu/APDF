@@ -26,6 +26,7 @@ import android.widget.FrameLayout;
 public class PDFFragment extends Fragment {
     public static final String ARG_URL = "argUrl";
     public static final String ARG_SCALE = "argScale";
+    public static final String ARG_DEBUG_JS = "argDebugJS";
     public static final String STATE_PAGES = "statePages";
     public static final String TAG = "PDFFragment";
     private String mUrl;
@@ -54,11 +55,12 @@ public class PDFFragment extends Fragment {
     private PDFJavascriptInterface mJSInterface;
     private PDFPagerAdapter mPageAdapter;
 
-    public static PDFFragment newInstance(String url, float scale) {
+    public static PDFFragment newInstance(String url, float scale, boolean debugJs) {
         PDFFragment fragment = new PDFFragment();
         Bundle arguments = new Bundle();
         arguments.putString(ARG_URL, url);
         arguments.putFloat(ARG_SCALE, scale);
+        arguments.putBoolean(ARG_DEBUG_JS, debugJs);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -111,7 +113,8 @@ public class PDFFragment extends Fragment {
         if (savedInstanceState == null) {
             mUrl = getArguments().getString(ARG_URL);
             mScale = getArguments().getFloat(ARG_SCALE);
-            mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale);
+            boolean debug = getArguments().getBoolean(ARG_DEBUG_JS);
+            mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale+"&debug=" + debug);
         } else {
             mWebView.restoreState(savedInstanceState);
             mPages = savedInstanceState.getStringArray(STATE_PAGES);
