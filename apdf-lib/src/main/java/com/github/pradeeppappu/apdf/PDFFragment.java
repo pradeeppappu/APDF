@@ -67,6 +67,8 @@ public class PDFFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "Enter: onCreateView");
+        Log.d(TAG, "OS version " + Build.VERSION.SDK_INT);
         if (container == null) {
             Log.e(TAG, "Container is null. Add the fragment using the below syntax.\n getSupportFragmentManager().beginTransaction().add(android.R.id.content, fragment, \"PDF\").commit();");
             throw new RuntimeException("Container is null");
@@ -94,26 +96,31 @@ public class PDFFragment extends Fragment {
         mPager.setAdapter(mPageAdapter);
 
         mPager.setOnPageChangeListener(mPageChangeListener);
+        Log.d(TAG, "Exit: onCreateView");
         return mPager;
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void setupWebViewLayer() {
+        Log.d(TAG, "setupWebViewLayer");
         mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     private void setupWebViewFileAccess() {
+        Log.d(TAG, "setupWebViewFileAccess");
         mWebView.getSettings().setAllowFileAccessFromFileURLs(true);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated");
         if (savedInstanceState == null) {
             mUrl = getArguments().getString(ARG_URL);
             mScale = getArguments().getFloat(ARG_SCALE);
             boolean debug = getArguments().getBoolean(ARG_DEBUG_JS);
+            Log.d(TAG, "loading viewer.html");
             mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale+"&debug=" + debug);
         } else {
             mWebView.restoreState(savedInstanceState);
