@@ -21,12 +21,10 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:19.+'
 }
 
 apply plugin: 'maven'
-apply plugin: 'signing'
 
 version = "1.0.0"
 group = "com.github.pradeepppappu"
@@ -37,16 +35,9 @@ configurations {
     }
 }
 
-signing {
-    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
-
 uploadArchives {
     configuration = configurations.archives
     repositories.mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
         repository(url: sonatypeRepo) {
             authentication(userName: sonatypeUsername, password: sonatypePassword)
         }
