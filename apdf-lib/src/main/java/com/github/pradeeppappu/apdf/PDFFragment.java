@@ -13,8 +13,6 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
@@ -33,11 +31,6 @@ public class PDFFragment extends Fragment {
     private String mUrl;
     private float mScale;
     private String[] mPages = new String[1]; // Images of all the pages.
-
-    private WebView mWebView;
-    private PDFPager mPager;
-    private PDFJavascriptInterface mJSInterface;
-    private PDFPagerAdapter mPageAdapter;
     private ViewPager.OnPageChangeListener mPageChangeListener = new ViewPager.OnPageChangeListener() {
         @Override
         public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -47,7 +40,7 @@ public class PDFFragment extends Fragment {
         @Override
         public void onPageSelected(int position) {
             Log.d(TAG, "Page selected : " + position);
-            if(mPages[position] == null)
+            if (mPages[position] == null)
                 mJSInterface.getPage(position + 1);
         }
 
@@ -56,6 +49,10 @@ public class PDFFragment extends Fragment {
 
         }
     };
+    private WebView mWebView;
+    private PDFPager mPager;
+    private PDFJavascriptInterface mJSInterface;
+    private PDFPagerAdapter mPageAdapter;
 
     public static PDFFragment newInstance(String url, float scale) {
         PDFFragment fragment = new PDFFragment();
@@ -67,14 +64,6 @@ public class PDFFragment extends Fragment {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD)
-            setHasOptionsMenu(true);
-    }
-
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (container == null) {
             Log.e(TAG, "Container is null. Add the fragment using the below syntax.\n getSupportFragmentManager().beginTransaction().add(android.R.id.content, fragment, \"PDF\").commit();");
@@ -83,14 +72,17 @@ public class PDFFragment extends Fragment {
 
         Context context = container.getContext();
         mWebView = new WebView(context);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
-            mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+            setupWebViewLayer();
+
         WebSettings settings = mWebView.getSettings();
         settings.setAllowFileAccess(true);
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            settings.setAllowFileAccessFromFileURLs(true);
+            setupWebViewFileAccess();
+
         mJSInterface = new PDFJavascriptInterface();
         mWebView.addJavascriptInterface(mJSInterface, "PDFAND");
         mPager = new PDFPager(context);
@@ -103,19 +95,20 @@ public class PDFFragment extends Fragment {
         return mPager;
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        menu.clear();
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void setupWebViewLayer() {
+        mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    private void setupWebViewFileAccess() {
+        mWebView.getSettings().setAllowFileAccessFromFileURLs(true);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
-            setHasOptionsMenu(true);
-        }
-        if(savedInstanceState == null) {
+        if (savedInstanceState == null) {
             mUrl = getArguments().getString(ARG_URL);
             mScale = getArguments().getFloat(ARG_SCALE);
             mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale);
@@ -134,13 +127,13 @@ public class PDFFragment extends Fragment {
     }
 
     public Bitmap getPageAt(int pageNum) {
-        if(pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
+        if (pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
             return Utils.getBitmap(mPages[pageNum]);
         return null;
     }
 
     public int getPageCount() {
-        if(mPages == null)
+        if (mPages == null)
             return 0;
         return mPages.length;
     }
@@ -183,7 +176,7 @@ public class PDFFragment extends Fragment {
         @JavascriptInterface
         public void setNumOfPages(int numOfPages) {
             Log.d(TAG, "Number of pages : " + numOfPages);
-            if(mPages.length < numOfPages) { // Eliminating a re-initalisation after a pause/resume
+            if (mPages.length < numOfPages) { // Eliminating a re-initalisation after a pause/resume
                 mPages = new String[numOfPages];
                 notifyDataSetChanged();
             }
@@ -239,7 +232,7 @@ public class PDFFragment extends Fragment {
         @Override
         public int getItemPosition(Object object) {
             PDFPage page = (PDFPage) object;
-            if(page.isLoaded())
+            if (page.isLoaded())
                 return super.getItemPosition(object);
             return POSITION_NONE;
         }
