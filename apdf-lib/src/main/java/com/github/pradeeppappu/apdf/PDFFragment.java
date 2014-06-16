@@ -79,10 +79,11 @@ public class PDFFragment extends Fragment {
 
         Context context = container.getContext();
         mWebView = new WebView(context);
-        mWebView.setWebChromeClient(new WebChromeClient(){
+        mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
-                Log.d(TAG, consoleMessage.message());
+                String msg = consoleMessage.sourceId() + "(" + consoleMessage.lineNumber() + ")\n" + consoleMessage.message();
+                Log.d(TAG, msg);
                 return true;
             }
         });
@@ -138,7 +139,12 @@ public class PDFFragment extends Fragment {
             mScale = getArguments().getFloat(ARG_SCALE);
             boolean debug = getArguments().getBoolean(ARG_DEBUG_JS);
             Log.d(TAG, "loading viewer.html");
-            mWebView.loadUrl("file:///android_asset/pdfjs/viewer.html?file=" + mUrl + "&scale=" + mScale+"&debug=" + debug);
+            String url;
+            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.GINGERBREAD_MR1)
+                url = "file:///android_asset/pdfjs/viewer.2.3.3.html";
+            else
+                url = "file:///android_asset/pdfjs/viewer.html";
+            mWebView.loadUrl(url + "?file=" + mUrl + "&scale=" + mScale + "&debug=" + debug);
         } else {
             mWebView.restoreState(savedInstanceState);
             mPages = savedInstanceState.getStringArray(STATE_PAGES);
@@ -151,6 +157,16 @@ public class PDFFragment extends Fragment {
         mWebView.saveState(outState);
         outState.putStringArray(STATE_PAGES, mPages);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mWebView != null) {
+            mWebView.stopLoading();
+            mWebView.destroy();
+            mWebView = null;
+        }
     }
 
     public Bitmap getPageAt(int pageNum) {
