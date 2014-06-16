@@ -33,9 +33,10 @@
                         viewport: viewport
                     };
                     pdfPage.render(renderContext).then(function(){
+                        var dataUrl = canvas.toDataURL();
                         if(debug)
-                            console.log(DEBUG + " Setting page " + index);
-                        PDFAND.setPage(index - 1, canvas.toDataURL());
+                            console.log(DEBUG + " Setting page " + index + " : " + dataUrl);
+                        PDFAND.setPage(index - 1, dataUrl);
                     });
                 });
             }
