@@ -4,7 +4,7 @@ android {
     compileSdkVersion 19
     buildToolsVersion '19.1.0'
     defaultConfig {
-        applicationId 'au.pappu.apdf'
+        applicationId 'com.github.pradeeppappu'
         minSdkVersion 8
         targetSdkVersion 19
         versionCode 1
@@ -28,7 +28,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 version = "1.0.0"
-group = "com.github.pradeepppappu"
+group = "com.pradeepppappu"
 
 configurations {
     archives {

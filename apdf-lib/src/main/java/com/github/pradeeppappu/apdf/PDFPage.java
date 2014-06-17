@@ -13,16 +13,18 @@ import android.widget.TextView;
 public class PDFPage extends Fragment {
 
     private static final String DATA_URL = "dataUrl";
+    private static final String BITMAP_QUALITy = "bitmapQuality";
 
     private Bitmap mBitmap;
     private PageView mPageView;
     private TextView mTextView;
     private RelativeLayout mRelativeLayout;
 
-    public static PDFPage newInstance(String dataUrl) {
+    public static PDFPage newInstance(String dataUrl,  int bitmapQuality) {
         PDFPage fragment = new PDFPage();
         Bundle arguments = new Bundle();
         arguments.putString(DATA_URL, dataUrl);
+        arguments.putInt(BITMAP_QUALITy, bitmapQuality);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -48,8 +50,9 @@ public class PDFPage extends Fragment {
         mRelativeLayout.addView(mPageView);
 
         String dataUrl = getArguments().getString(DATA_URL);
+        int bitmapQuality = getArguments().getInt(BITMAP_QUALITy);
         if (dataUrl != null) {
-            setBitmap(dataUrl);
+            setBitmap(dataUrl, context, bitmapQuality);
             mPageView.setImageBitmap(mBitmap);
             mPageView.setVisibility(View.VISIBLE);
             mTextView.setVisibility(View.GONE);
@@ -60,10 +63,10 @@ public class PDFPage extends Fragment {
         return mRelativeLayout;
     }
 
-    private void setBitmap(String dataUrl) {
+    private void setBitmap(String dataUrl, Context context, int bitmapQuality) {
        if (mBitmap != null)
             mBitmap.recycle();
-        mBitmap = Utils.getBitmap(dataUrl);
+        mBitmap = Utils.getBitmap(dataUrl, context, bitmapQuality);
     }
 
     @Override

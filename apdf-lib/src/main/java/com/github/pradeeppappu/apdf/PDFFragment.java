@@ -30,10 +30,12 @@ public class PDFFragment extends Fragment {
     public static final String ARG_URL = "argUrl";
     public static final String ARG_SCALE = "argScale";
     public static final String ARG_DEBUG_JS = "argDebugJS";
+    public static final String ARG_BITMAP_QUALITY = "bitmapQuality";
     public static final String STATE_PAGES = "statePages";
     public static final String TAG = "PDFFragment";
     private String mUrl;
     private float mScale;
+    private int bitmapQuality = 100;
     private String[] mPages = new String[1]; // Images of all the pages.
     private ViewPager.OnPageChangeListener mPageChangeListener = new ViewPager.OnPageChangeListener() {
         @Override
@@ -58,12 +60,13 @@ public class PDFFragment extends Fragment {
     private PDFJavascriptInterface mJSInterface;
     private PDFPagerAdapter mPageAdapter;
 
-    public static PDFFragment newInstance(String url, float scale, boolean debugJs) {
+    public static PDFFragment newInstance(String url, float scale, int bitmapQuality, boolean debugJs) {
         PDFFragment fragment = new PDFFragment();
         Bundle arguments = new Bundle();
         arguments.putString(ARG_URL, url);
         arguments.putFloat(ARG_SCALE, scale);
         arguments.putBoolean(ARG_DEBUG_JS, debugJs);
+        arguments.putInt(ARG_BITMAP_QUALITY, bitmapQuality);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -171,7 +174,7 @@ public class PDFFragment extends Fragment {
 
     public Bitmap getPageAt(int pageNum) {
         if (pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
-            return Utils.getBitmap(mPages[pageNum]);
+            return Utils.getBitmap(mPages[pageNum], getActivity(), bitmapQuality);
         return null;
     }
 
@@ -264,7 +267,7 @@ public class PDFFragment extends Fragment {
 
         @Override
         public Fragment getItem(int position) {
-            return PDFPage.newInstance(mPages[position]);
+            return PDFPage.newInstance(mPages[position], bitmapQuality);
         }
 
         @Override
