@@ -29,7 +29,6 @@ public class Utils {
         String encodedData = dataUrl.substring(dataUrl.indexOf(",") + 1);
         byte[] decodedString = Base64.decode(encodedData, Base64.DEFAULT);
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferQualityOverSpeed = false;
         options.inPreferredConfig = Bitmap.Config.RGB_565;
         Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length, options);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();

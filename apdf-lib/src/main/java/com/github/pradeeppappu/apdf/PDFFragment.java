@@ -147,7 +147,7 @@ public class PDFFragment extends Fragment {
                 url = "file:///android_asset/pdfjs/viewer.2.3.3.html";
             else
                 url = "file:///android_asset/pdfjs/viewer.html";
-            mWebView.loadUrl(url + "?file=" + mUrl + "&scale=" + mScale + "&debug=" + debug);
+            mWebView.loadUrl(url + "?file=" + mUrl + "&scale=" + mScale + "&debug=" + debug + "&quality=" + bitmapQuality);
         } else {
             mWebView.restoreState(savedInstanceState);
             mPages = savedInstanceState.getStringArray(STATE_PAGES);

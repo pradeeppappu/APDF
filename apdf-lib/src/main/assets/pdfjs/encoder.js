@@ -1,17 +1,46 @@
-// JPEG encoder ported to JavaScript, optimized by Andreas Ritter (www.bytestrom.eu, 11/2009) and made suitable for steganography by Owen Campbell-Moore (www.owencampbellmoore.com, 03/13)
-// Based on v 0.9a
-// Licensed under the MIT License
-// Copyright (c) 2009 Andreas Ritter
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-// Copyright 2011 notmasteryet
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-// http://www.apache.org/licenses/LICENSE-2.0
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+/*
+  Copyright (c) 2008, Adobe Systems Incorporated
+  All rights reserved.
 
-function JPEGEncoder() {
-	var self = this;
+  Redistribution and use in source and binary forms, with or without 
+  modification, are permitted provided that the following conditions are
+  met:
+
+  * Redistributions of source code must retain the above copyright notice, 
+    this list of conditions and the following disclaimer.
+  
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the 
+    documentation and/or other materials provided with the distribution.
+  
+  * Neither the name of Adobe Systems Incorporated nor the names of its 
+    contributors may be used to endorse or promote products derived from 
+    this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+  IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR 
+  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+/*
+JPEG encoder ported to JavaScript and optimized by Andreas Ritter, www.bytestrom.eu, 11/2009
+
+Basic GUI blocking jpeg encoder
+*/
+
+var btoa = btoa || function(buf) {
+  return new Buffer(buf).toString('base64');
+};
+
+function JPEGEncoder(quality) {
+  var self = this;
 	var fround = Math.round;
 	var ffloor = Math.floor;
 	var YTable = new Array(64);
@@ -124,7 +153,6 @@ function JPEGEncoder() {
 				}
 				YTable[ZigZag[i]] = t;
 			}
-
 			var UVQT = [
 				17, 18, 24, 47, 99, 99, 99, 99,
 				18, 21, 26, 66, 99, 99, 99, 99,
@@ -249,7 +277,8 @@ function JPEGEncoder() {
 	
 		function writeByte(value)
 		{
-			byteout.push(clt[value]); // write char directly instead of converting later
+			//byteout.push(clt[value]); // write char directly instead of converting later
+      byteout.push(value);
 		}
 	
 		function writeWord(value)
@@ -378,19 +407,17 @@ function JPEGEncoder() {
 	
 				dataOff++; /* advance pointer to next column */
 			}
-
+	
 			// Quantize/descale the coefficients
-			var fDCTQuantVar;
-			var outputfDCTQuant = new Array(64);
+			var fDCTQuant;
 			for (i=0; i<I64; ++i)
 			{
 				// Apply the quantization and scaling factor & Round to nearest integer
-				fDCTQuantVar = data[i]*fdtbl[i];
-				outputfDCTQuant[i] = (fDCTQuantVar > 0.0) ? ((fDCTQuantVar + 0.5)|0) : ((fDCTQuantVar - 0.5)|0);
+				fDCTQuant = data[i]*fdtbl[i];
+				outputfDCTQuant[i] = (fDCTQuant > 0.0) ? ((fDCTQuant + 0.5)|0) : ((fDCTQuant - 0.5)|0);
 				//outputfDCTQuant[i] = fround(fDCTQuant);
 
 			}
-
 			return outputfDCTQuant;
 		}
 		
@@ -499,14 +526,14 @@ function JPEGEncoder() {
 			writeByte(0); // Bf
 		}
 		
-		function processDU(DU_DCT, DC, HTDC, HTAC){
+		function processDU(CDU, fdtbl, DC, HTDC, HTAC){
 			var EOB = HTAC[0x00];
 			var M16zeroes = HTAC[0xF0];
 			var pos;
 			const I16 = 16;
 			const I63 = 63;
 			const I64 = 64;
-
+			var DU_DCT = fDCTQuant(CDU, fdtbl);
 			//ZigZag reorder
 			for (var j=0;j<I64;++j) {
 				DU[ZigZag[j]]=DU_DCT[j];
@@ -558,11 +585,11 @@ function JPEGEncoder() {
 			}
 		}
 		
-		this.encode = function(image, quality) // image data object
+		this.encode = function(image,quality) // image data object
 		{
 			var time_start = new Date().getTime();
 			
-			setQuality(quality);
+			if(quality) setQuality(quality);
 			
 			// Initialize bit writer
 			byteout = new Array();
@@ -597,66 +624,57 @@ function JPEGEncoder() {
 			var tripleWidth = width*3;
 			
 			var x, y = 0;
-			var j = 0;
 			var r, g, b;
 			var start,p, col,row,pos;
-			var DU_DCT_ARRAY = new Array();
-			DU_DCT_ARRAY[0] = new Array();
-			DU_DCT_ARRAY[1] = new Array();
-			DU_DCT_ARRAY[2] = new Array();
 			while(y < height){
 				x = 0;
 				while(x < quadWidth){
-					start = quadWidth * y + x;
-					p = start;
-					col = -1;
-					row = 0;
+				start = quadWidth * y + x;
+				p = start;
+				col = -1;
+				row = 0;
+				
+				for(pos=0; pos < 64; pos++){
+					row = pos >> 3;// /8
+					col = ( pos & 7 ) * 4; // %8
+					p = start + ( row * quadWidth ) + col;		
 					
-					for(pos=0; pos < 64; pos++){
-						row = pos >> 3;// /8
-						col = ( pos & 7 ) * 4; // %8
-						p = start + ( row * quadWidth ) + col;		
-						
-						if(y+row >= height){ // padding bottom
-							p-= (quadWidth*(y+1+row-height));
-						}
+					if(y+row >= height){ // padding bottom
+						p-= (quadWidth*(y+1+row-height));
+					}
 
-						if(x+col >= quadWidth){ // padding right	
-							p-= ((x+col) - quadWidth +4)
-						}
-						
-						r = imageData[ p++ ];
-						g = imageData[ p++ ];
-						b = imageData[ p++ ];
-						
-						
-						/* // calculate YUV values dynamically
-						YDU[pos]=((( 0.29900)*r+( 0.58700)*g+( 0.11400)*b))-128; //-0x80
-						UDU[pos]=(((-0.16874)*r+(-0.33126)*g+( 0.50000)*b));
-						VDU[pos]=((( 0.50000)*r+(-0.41869)*g+(-0.08131)*b));
-						*/
-						
-						// use lookup table (slightly faster)
-						YDU[pos] = ((RGB_YUV_TABLE[r]             + RGB_YUV_TABLE[(g +  256)>>0] + RGB_YUV_TABLE[(b +  512)>>0]) >> 16)-128;
-						UDU[pos] = ((RGB_YUV_TABLE[(r +  768)>>0] + RGB_YUV_TABLE[(g + 1024)>>0] + RGB_YUV_TABLE[(b + 1280)>>0]) >> 16)-128;
-						VDU[pos] = ((RGB_YUV_TABLE[(r + 1280)>>0] + RGB_YUV_TABLE[(g + 1536)>>0] + RGB_YUV_TABLE[(b + 1792)>>0]) >> 16)-128;
+					if(x+col >= quadWidth){ // padding right	
+						p-= ((x+col) - quadWidth +4)
 					}
 					
-					DU_DCT_ARRAY[0][j] = fDCTQuant(YDU, fdtbl_Y);
-					DU_DCT_ARRAY[1][j] = fDCTQuant(UDU, fdtbl_UV);
-					DU_DCT_ARRAY[2][j] = fDCTQuant(VDU, fdtbl_UV);
+					r = imageData[ p++ ];
+					g = imageData[ p++ ];
+					b = imageData[ p++ ];
+					
+					
+					/* // calculate YUV values dynamically
+					YDU[pos]=((( 0.29900)*r+( 0.58700)*g+( 0.11400)*b))-128; //-0x80
+					UDU[pos]=(((-0.16874)*r+(-0.33126)*g+( 0.50000)*b));
+					VDU[pos]=((( 0.50000)*r+(-0.41869)*g+(-0.08131)*b));
+					*/
+					
+					// use lookup table (slightly faster)
+					YDU[pos] = ((RGB_YUV_TABLE[r]             + RGB_YUV_TABLE[(g +  256)>>0] + RGB_YUV_TABLE[(b +  512)>>0]) >> 16)-128;
+					UDU[pos] = ((RGB_YUV_TABLE[(r +  768)>>0] + RGB_YUV_TABLE[(g + 1024)>>0] + RGB_YUV_TABLE[(b + 1280)>>0]) >> 16)-128;
+					VDU[pos] = ((RGB_YUV_TABLE[(r + 1280)>>0] + RGB_YUV_TABLE[(g + 1536)>>0] + RGB_YUV_TABLE[(b + 1792)>>0]) >> 16)-128;
 
-					x+=32;
-					j++;
+				}
+				
+				DCY = processDU(YDU, fdtbl_Y, DCY, YDC_HT, YAC_HT);
+				DCU = processDU(UDU, fdtbl_UV, DCU, UVDC_HT, UVAC_HT);
+				DCV = processDU(VDU, fdtbl_UV, DCV, UVDC_HT, UVAC_HT);
+				x+=32;
 				}
 				y+=8;
 			}
-
-			for (var i = 0; i < j; i++){
-				DCY = processDU(DU_DCT_ARRAY[0][i], DCY, YDC_HT, YAC_HT);
-				DCU = processDU(DU_DCT_ARRAY[1][i], DCU, UVDC_HT, UVAC_HT);
-				DCV = processDU(DU_DCT_ARRAY[2][i], DCV, UVDC_HT, UVAC_HT);
-			}
+			
+			
+			////////////////////////////////////////////////////////////////
 	
 			// Do the bit alignment of the EOI marker
 			if ( bytepos >= 0 ) {
@@ -668,13 +686,16 @@ function JPEGEncoder() {
 	
 			writeWord(0xFFD9); //EOI
 
+      //return new Uint8Array(byteout);
+      return new Buffer(byteout);
+
 			var jpegDataUri = 'data:image/jpeg;base64,' + btoa(byteout.join(''));
 			
 			byteout = [];
 			
 			// benchmarking
 			var duration = new Date().getTime() - time_start;
-    		console.log('Encoding time: '+ duration + 'ms');
+    		//console.log('Encoding time: '+ duration + 'ms');
     		//
 			
 			return jpegDataUri			
@@ -699,21 +720,47 @@ function JPEGEncoder() {
 		
 		initQuantTables(sf);
 		currentQuality = quality;
-		console.log('Quality set to: '+quality +'%');
+		//console.log('Quality set to: '+quality +'%');
 	}
 	
 	function init(){
 		var time_start = new Date().getTime();
+		if(!quality) quality = 50;
 		// Create tables
 		initCharLookupTable()
 		initHuffmanTbl();
 		initCategoryNumber();
 		initRGBYUVTable();
 		
+		setQuality(quality);
 		var duration = new Date().getTime() - time_start;
-    	console.log('Initialization '+ duration + 'ms');
+    	//console.log('Initialization '+ duration + 'ms');
 	}
 	
 	init();
 	
 };
+module.exports = encode;
+
+function encode(imgData, qu) {
+  if (typeof qu === 'undefined') qu = 50;
+  var encoder = new JPEGEncoder(qu);
+	var data = encoder.encode(imgData, qu);
+  return {
+    data: data,
+    width: imgData.width,
+    height: imgData.height
+  };
+}
+
+// helper function to get the imageData of an existing image on the current page.
+function getImageDataFromImage(idOrElement){
+	var theImg = (typeof(idOrElement)=='string')? document.getElementById(idOrElement):idOrElement;
+	var cvs = document.createElement('canvas');
+	cvs.width = theImg.width;
+	cvs.height = theImg.height;
+	var ctx = cvs.getContext("2d");
+	ctx.drawImage(theImg,0,0);
+	
+	return (ctx.getImageData(0, 0, cvs.width, cvs.height));
+}

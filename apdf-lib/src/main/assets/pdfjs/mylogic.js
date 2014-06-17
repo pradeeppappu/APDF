@@ -15,6 +15,9 @@
             var url = params.file;
             var scale = params.scale;
             var debug = params.debug;
+            bitmapQuality = params.quality;
+            if(typof bitmapQuality === "undefined" || bitmapQuality === "")
+                bitmapQuality = 100;
             var pageNum = 1;
             var pageCount = 0;
             var pdfDocument;
@@ -33,7 +36,7 @@
                         viewport: viewport
                     };
                     pdfPage.render(renderContext).then(function(){
-                        var dataUrl = canvas.toDataURL();
+                        var dataUrl = canvas.toDataURL("image/jpeg", bitmapQuality / 100);
                         if(debug)
                             console.log(DEBUG + " Setting page " + index + " : " + dataUrl);
                         PDFAND.setPage(index - 1, dataUrl);
