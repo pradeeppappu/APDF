@@ -8,8 +8,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.ViewPager;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,43 +28,24 @@ public class PDFFragment extends Fragment {
     public static final String ARG_URL = "argUrl";
     public static final String ARG_SCALE = "argScale";
     public static final String ARG_DEBUG_JS = "argDebugJS";
-    public static final String ARG_BITMAP_QUALITY = "bitmapQuality";
-    public static final String STATE_PAGES = "statePages";
+
+    public static final String STATE_PAGE_COUNT = "statePageCount";
     public static final String TAG = "PDFFragment";
     private String mUrl;
     private float mScale;
-    private int bitmapQuality = 100;
-    private String[] mPages = new String[1]; // Images of all the pages.
-    private ViewPager.OnPageChangeListener mPageChangeListener = new ViewPager.OnPageChangeListener() {
-        @Override
-        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-        }
-
-        @Override
-        public void onPageSelected(int position) {
-            Log.d(TAG, "Page selected : " + position);
-            if (mPages[position] == null)
-                mJSInterface.getPage(position + 1);
-        }
-
-        @Override
-        public void onPageScrollStateChanged(int state) {
-
-        }
-    };
+    private int mPageCount = 1;
+    private boolean isBelowHCMR2 = false;
     private WebView mWebView;
     private PDFPager mPager;
     private PDFJavascriptInterface mJSInterface;
     private PDFPagerAdapter mPageAdapter;
 
-    public static PDFFragment newInstance(String url, float scale, int bitmapQuality, boolean debugJs) {
+    public static PDFFragment newInstance(String url, float scale, boolean debugJs) {
         PDFFragment fragment = new PDFFragment();
         Bundle arguments = new Bundle();
         arguments.putString(ARG_URL, url);
         arguments.putFloat(ARG_SCALE, scale);
         arguments.putBoolean(ARG_DEBUG_JS, debugJs);
-        arguments.putInt(ARG_BITMAP_QUALITY, bitmapQuality);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -115,8 +94,7 @@ public class PDFFragment extends Fragment {
         mPager.setId(android.R.id.custom);
         mPageAdapter = new PDFPagerAdapter(getChildFragmentManager());
         mPager.setAdapter(mPageAdapter);
-
-        mPager.setOnPageChangeListener(mPageChangeListener);
+        mPager.setOffscreenPageLimit(1);
         Log.d(TAG, "Exit: onCreateView");
         return mPager;
     }
@@ -142,15 +120,16 @@ public class PDFFragment extends Fragment {
             mScale = getArguments().getFloat(ARG_SCALE);
             boolean debug = getArguments().getBoolean(ARG_DEBUG_JS);
             Log.d(TAG, "loading viewer.html");
+            isBelowHCMR2 = Build.VERSION.SDK_INT <= Build.VERSION_CODES.HONEYCOMB_MR1;
             String url;
-            if (Build.VERSION.SDK_INT == Build.VERSION_CODES.GINGERBREAD_MR1)
+            if (isBelowHCMR2)
                 url = "file:///android_asset/pdfjs/viewer.2.3.3.html";
             else
                 url = "file:///android_asset/pdfjs/viewer.html";
-            mWebView.loadUrl(url + "?file=" + mUrl + "&scale=" + mScale + "&debug=" + debug + "&quality=" + bitmapQuality);
+            mWebView.loadUrl(url + "?file=" + mUrl + "&scale=" + mScale + "&debug=" + debug);
         } else {
             mWebView.restoreState(savedInstanceState);
-            mPages = savedInstanceState.getStringArray(STATE_PAGES);
+            mPageCount = savedInstanceState.getInt(STATE_PAGE_COUNT);
             notifyDataSetChanged();
         }
     }
@@ -158,7 +137,7 @@ public class PDFFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         mWebView.saveState(outState);
-        outState.putStringArray(STATE_PAGES, mPages);
+        outState.putInt(STATE_PAGE_COUNT, mPageCount);
         super.onSaveInstanceState(outState);
     }
 
@@ -172,20 +151,14 @@ public class PDFFragment extends Fragment {
         }
     }
 
-    public Bitmap getPageAt(int pageNum) {
-        if (pageNum < mPages.length && !TextUtils.isEmpty(mPages[pageNum]))
-            return Utils.getBitmap(mPages[pageNum], getActivity(), bitmapQuality);
-        return null;
+    public void getPageAt(int pageNum, OnPageLoadedListener pageLoadedListener) {
+        if (pageNum >= mPageCount)
+            throw new IndexOutOfBoundsException("" + pageNum + " is invalid. Max. noOfPages is " + mPageCount);
+        mJSInterface.getPage(pageNum + 1, pageLoadedListener);
     }
 
     public int getPageCount() {
-        if (mPages == null)
-            return 0;
-        return mPages.length;
-    }
-
-    public String[] getPages() {
-        return mPages;
+        return mPageCount;
     }
 
     private void notifyDataSetChanged() {
@@ -207,38 +180,52 @@ public class PDFFragment extends Fragment {
         });
     }
 
-    public class PDFJavascriptInterface {
-        private static final String JS_CALL_GET_PAGE = "javascript:getPage(%1$s)";
-        private static final String JS_CALL_GET_ALL_PAGES = "javascript:getAllPages()";
+    public interface OnPageLoadedListener {
+        void onPageLoaded(int index, String dataUri);
+    }
 
-        public void getPage(int index) {
-            loadUrl(String.format(JS_CALL_GET_PAGE, index));
+    public class PDFJavascriptInterface {
+        private static final String JS_CALL_GET_PAGE = "javascript:if(typeof getPage !== 'undefined') getPage(%1$s, %2$s)";
+        private static final String JS_CALL_LOAD_ALL_PAGES = "javascript:if(typeof loadAllPages !== 'undefined') loadAllPages(function(){})";
+        private OnPageLoadedListener[] pageLoadedListeners;
+
+        public void getPage(int index, OnPageLoadedListener pageLoadedListener) {
+            Log.d(TAG, "getPage " + index);
+            if (pageLoadedListeners == null)
+                pageLoadedListeners = new OnPageLoadedListener[index];
+            pageLoadedListeners[index - 1] = pageLoadedListener;
+            Log.d(TAG, "Setting pageLoadedListener for page " + index);
+            loadUrl(String.format(JS_CALL_GET_PAGE, index, "function(index, page){ PDFAND.setPage(index-1, page, true); }"));
         }
 
-        public void getAllPages() {
-            loadUrl(JS_CALL_GET_ALL_PAGES);
+        public void loadAllPages() {
+            loadUrl(JS_CALL_LOAD_ALL_PAGES);
         }
 
         @JavascriptInterface
         public void setNumOfPages(int numOfPages) {
             Log.d(TAG, "Number of pages : " + numOfPages);
-            if (mPages.length < numOfPages) { // Eliminating a re-initalisation after a pause/resume
-                mPages = new String[numOfPages];
-                notifyDataSetChanged();
+            OnPageLoadedListener[] currentPageLoadedListeners = pageLoadedListeners == null ? null : pageLoadedListeners.clone();
+            pageLoadedListeners = new OnPageLoadedListener[numOfPages];
+            if (currentPageLoadedListeners != null) {
+                Log.d(TAG, "Reloading listeners " + currentPageLoadedListeners.length);
+                int i = 0;
+                for (OnPageLoadedListener listener : currentPageLoadedListeners) {
+                    Log.d(TAG, "Reloading listener for page " + (i + 1));
+                    pageLoadedListeners[i++] = listener;
+                }
             }
-        }
-
-        @JavascriptInterface
-        public void setPage(int index, String pageImg) {
-            Log.d(TAG, "setPage(" + index + ", " + pageImg + ")");
-            mPages[index] = pageImg;
+            mPageCount = numOfPages;
             notifyDataSetChanged();
         }
 
         @JavascriptInterface
-        public void setPages(String[] pages) {
-            mPages = pages;
-            notifyDataSetChanged();
+        public void setPage(int index, String pageImg, boolean callOnPageLoadedListener) {
+            Log.d(TAG, "setPage " + (index + 1));
+            if (callOnPageLoadedListener && pageLoadedListeners != null && pageLoadedListeners[index] != null) {
+                Log.d(TAG, "setPage " + (index + 1) + " invoking pageLoadedListener");
+                pageLoadedListeners[index].onPageLoaded(index, pageImg);
+            }
         }
     }
 
@@ -267,17 +254,34 @@ public class PDFFragment extends Fragment {
 
         @Override
         public Fragment getItem(int position) {
-            return PDFPage.newInstance(mPages[position], bitmapQuality);
+            Log.d(TAG, "Creating page " + (position + 1));
+            final PDFPage page = PDFPage.newInstance(position, mScale);
+            mJSInterface.getPage(position + 1, new OnPageLoadedListener() {
+                @Override
+                public void onPageLoaded(int index, String dataURI) {
+                    Log.d(TAG, "Loaded Page " + (index + 1));
+                    page.getArguments().putString(PDFPage.DATA_URL, dataURI);
+                    page.drawBitmap(page.getActivity());
+                }
+            });
+            return page;
         }
 
         @Override
         public int getCount() {
-            return mPages.length;
+            return mPageCount;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            Log.d(TAG, "Destroying page " + (position + 1));
+            super.destroyItem(container, position, object);
         }
 
         @Override
         public int getItemPosition(Object object) {
             PDFPage page = (PDFPage) object;
+            Log.d(TAG, "Is Page Loaded " + page.isLoaded());
             if (page.isLoaded())
                 return super.getItemPosition(object);
             return POSITION_NONE;

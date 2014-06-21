@@ -3,7 +3,10 @@ package com.github.pradeeppappu.apdf;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,20 +14,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 public class PDFPage extends Fragment {
-
-    private static final String DATA_URL = "dataUrl";
-    private static final String BITMAP_QUALITy = "bitmapQuality";
+    private static final String TAG = PDFPage.class.getName();
+    public static final String DATA_URL = "dataUrl";
+    private static final String SCALE = "scale";
+    private static final String PAGE_NUM = "pageNum";
 
     private Bitmap mBitmap;
     private PageView mPageView;
     private TextView mTextView;
     private RelativeLayout mRelativeLayout;
+    private int pageNumber;
 
-    public static PDFPage newInstance(String dataUrl,  int bitmapQuality) {
+    public static PDFPage newInstance(int pageNum, float mScale) {
         PDFPage fragment = new PDFPage();
         Bundle arguments = new Bundle();
-        arguments.putString(DATA_URL, dataUrl);
-        arguments.putInt(BITMAP_QUALITy, bitmapQuality);
+        arguments.putInt(PAGE_NUM, pageNum);
+        arguments.putFloat(SCALE, mScale);
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -50,23 +55,46 @@ public class PDFPage extends Fragment {
         mRelativeLayout.addView(mPageView);
 
         String dataUrl = getArguments().getString(DATA_URL);
-        int bitmapQuality = getArguments().getInt(BITMAP_QUALITy);
-        if (dataUrl != null) {
-            setBitmap(dataUrl, context, bitmapQuality);
-            mPageView.setImageBitmap(mBitmap);
-            mPageView.setVisibility(View.VISIBLE);
-            mTextView.setVisibility(View.GONE);
-        } else {
-            mPageView.setVisibility(View.GONE);
-            mTextView.setVisibility(View.VISIBLE);
+        pageNumber = getArguments().getInt(PAGE_NUM);
+        if(dataUrl != null) {
+            drawBitmap(context);
+            dataUrl = null;
         }
         return mRelativeLayout;
     }
 
-    private void setBitmap(String dataUrl, Context context, int bitmapQuality) {
+    public void drawBitmap(final Context context) {
+        Log.d(TAG, "drawing Bitmap for page " + (pageNumber + 1));
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                String dataUrl = getArguments().getString(DATA_URL);
+                if (dataUrl != null) {
+                    float scale = getArguments().getFloat(SCALE);
+                    setBitmap(dataUrl, context == null ? getActivity() : context, scale);
+                    dataUrl = null;
+                    mPageView.setImageBitmap(mBitmap);
+                    mPageView.setVisibility(View.VISIBLE);
+                    mTextView.setVisibility(View.GONE);
+                } else {
+                    mPageView.setVisibility(View.GONE);
+                    mTextView.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+    }
+
+    public int getPageNumber() {
+        return pageNumber;
+    }
+
+    private void setBitmap(String dataUrl, Context context, float scale) {
        if (mBitmap != null)
             mBitmap.recycle();
-        mBitmap = Utils.getBitmap(dataUrl, context, bitmapQuality);
+        if(dataUrl != null) {
+            mBitmap = Utils.getBitmap(dataUrl, context, Math.round(scale));
+            dataUrl = null;
+        }
     }
 
     @Override

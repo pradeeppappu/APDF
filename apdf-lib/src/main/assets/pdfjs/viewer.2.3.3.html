@@ -2,19 +2,19 @@
 <html>
 <head>
     <script src="encoder.js"></script>
+    <script src="es5-shim.min.js"></script>
+    <script src="compatibility.min.js"></script>
     <script type="text/javascript">
         var tdu = HTMLCanvasElement.prototype.toDataURL;
         HTMLCanvasElement.prototype.toDataURL = function(type) {
             var res = tdu.apply(this,arguments);
             //If toDataURL fails then we improvise
-            if(res.substr(0,6) == "data:,"){
-                return encode(this.getContext("2d").getImageData(0,0,this.width,this.height), bitmapQuality);
-            } else
-                return res;
+            if(res.substr(0,6) == "data:,") {
+                var encoder = new JpegEncoder(50);
+                return encoder.encode(this.getContext("2d").getImageData(0,0,this.width,this.height), 50);
+            } else return res;
         }
     </script>
-    <script src="es5-shim.min.js"></script>
-    <script src="compatibility.min.js"></script>
     <script src="pdf.min.js"></script>
     <script src="mylogic.js"></script>
 </head>

@@ -20,25 +20,31 @@ import java.io.Writer;
  * Created by pappu on 13/06/2014.
  */
 public class Utils {
+    protected static final int QUALITY = 50;
     /**
      * Used to get a bitmap from a given dataUrl.
      * @param dataUrl
      * @return
      */
-    public static Bitmap getBitmap(String dataUrl, Context ctx, int quality) {
+    public static Bitmap getBitmap(String dataUrl, Context ctx, int sampleSize) {
         String encodedData = dataUrl.substring(dataUrl.indexOf(",") + 1);
+        dataUrl = null;
         byte[] decodedString = Base64.decode(encodedData, Base64.DEFAULT);
+        encodedData = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inPreferredConfig = Bitmap.Config.RGB_565;
+        options.inSampleSize = sampleSize;
+
         Bitmap bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length, options);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, QUALITY, baos);
         try {
             baos.flush();
             bitmap.recycle();
             byte[] imageData = baos.toByteArray();
             baos.close();
             BitmapDrawable bmd = new BitmapDrawable(ctx.getResources(), new ByteArrayInputStream(imageData));
+            imageData = null;
             return bmd.getBitmap();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create bitmap.", e);
