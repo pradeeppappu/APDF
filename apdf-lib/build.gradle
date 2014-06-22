@@ -28,7 +28,7 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 version = "1.0.0"
-group = "com.pradeepppappu"
+group = "com.github.pradeeppappu"
 
 configurations {
     archives {
@@ -57,7 +57,7 @@ uploadArchives {
             url 'https://github.com/pradeeppappu/APDF'
 
             scm {
-                url 'scm:git@github.com:pradeeppappu/APDF.git'
+                url 'github.com:pradeeppappu/APDF.git'
                 connection 'scm:git@github.com:pradeeppappu/APDF.git'
                 developerConnection 'scm:git@github.com:pradeeppappu/APDF.git'
             }
@@ -72,7 +72,7 @@ uploadArchives {
 
             developers {
                 developer {
-                    id 'pappu'
+                    id 'pradeeppappu'
                     name 'Pradeep Pappu'
                     email 'pappu.pradeep34@gmail.com'
                 }
